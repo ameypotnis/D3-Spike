@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="/bootstrap/css/docs.css">
+    <link rel="stylesheet" href="/bootstrap/css/nvd3.css">
+    <link rel="stylesheet" href="/stylesheets/graph.css" />
+    <script type="text/javascript" src="/javascripts/d3.js"></script>
+    <script type="text/javascript" src="/javascripts/fisheye.js"></script>
+    <script type="text/javascript" src="/javascripts/nv.d3.js"></script>
+    <script type="text/javascript" src="/javascripts/Underscore.js"></script>
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <ul class="nav">
+            <li><a href="PieChart.html"><i class="icon-home icon-white"></i> </a></li>
+            <li><a href="PieChart.html">Pie chart</a></li>
+            <li><a href="nvd3Bar.html">Bar</a></li>
+            <li><a href="multibar.html">Multi Bar Chart</a></li>
+        </ul>
+    </div>
+</div>
+<div class="container">
+    <header>
+        <h1>Bubble</h1>
+    </header>
+</div>
+
+<style>
+
+    #chart svg {
+        height: 400px;
+    }
+
+</style>
+
+
+<div id="chart">
+    <svg></svg>
+</div>
+
+<script type="text/javascript">
+    d3.json("PM.json", function(data) {
+        var registrations = [];
+
+        _.each(data, function(num){ registrations.push({
+            "date" : _.pick(num, 'metaData').metaData.originatorEventTime ,
+            "x" : _.pick(num, 'metaData').metaData.originatorEventTime ,
+            "channel" : _.pick(num, 'data').data.channel_code,
+            "y" : 1
+        })
+        });
+
+         var symbols = d3.nest()
+         .key(function(d) { return d.channel; })
+         .entries(registrations);
+
+        nv.addGraph(function() {
+            var chart = nv.models.scatterChart()
+                    .showDistX(true)
+                    .showDistY(true)
+                    .color(d3.scale.category10().range());
+
+            chart.xAxis.tickFormat(function(d) { return d3.time.format('%x')(new Date(d)) });
+            chart.yAxis.tickFormat(d3.format('1f'))
+
+            d3.select('#chart svg')
+                    .datum(randomData(symbols.length,symbols))
+                    .transition().duration(500)
+                    .call(chart);
+
+            nv.utils.windowResize(chart.update);
+            console.log(JSON.stringify(randomData(symbols.length,symbols)));
+            return chart;
+        });
+    });
+
+
+
+
+    /**************************************
+     * Simple test data generator
+     */
+
+    function randomData(groups, points) { //# groups,# points per group
+        var data = [],
+                shapes = ['circle', 'cross', 'triangle-up', 'triangle-down', 'diamond', 'square'],
+                random = d3.random.normal();
+
+        for (i = 0; i < groups; i++) {
+            data.push({
+                key: points[i].key,
+                values: []
+            });
+
+            for (j = 0; j < 10; j++) {
+                data[i].values.push({
+                    x: random()
+                    , y: random()
+                    , size: Math.random()
+                    //, shape: shapes[j % 6]
+                });
+            }
+        }
+
+        return data;
+    }
+</script>
+</body>
+</html>

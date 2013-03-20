@@ -1,0 +1,48 @@
+<html>
+<head>
+    <title>Simple Socket Receiver | RTS Demo</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="/bootstrap/css/docs.css">
+    <link rel="stylesheet" href="/stylesheets/graph.css" />
+    <script src='javascripts/jquery-1.7.1.min.js'></script>
+    <script src='http://localhost:8011/socket.io/socket.io.js'></script>
+    <script>
+        $(function(){
+
+            if(typeof(io) === 'undefined')
+                $("#output").html("No WS connection");
+            else
+            {
+                var socket = io.connect('ws://localhost:8011');
+
+
+                socket.on('stats-channel', function (data) {
+                    console.log('Received some data.');
+                    $("#output").html(data._id);
+                });
+            }
+
+        });
+    </script>
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <ul class="nav">
+                <li><a href="index.html"><i class="icon-home icon-white"></i> </a></li>
+                <li><a href="simple.html">Simple Receiver</a></li>
+                <li><a href="d3example.html">D3 Example</a></li>
+                <li><a href="bar.html">Bar Chart</a></li>
+                <li><a href="oplog.html">Oplog Watcher</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="container">
+        <header>
+            <h1>Simple Socket Receiver</h1>
+        </header>
+        <div id="output"></div>
+    </div>
+</body>
+</html>

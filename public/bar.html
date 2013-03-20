@@ -1,0 +1,135 @@
+<html>
+<head>
+    <title>Bar Chart | RTS Demo</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="/bootstrap/css/docs.css">
+    <link rel="stylesheet" href="/stylesheets/graph.css" />
+    <script src='javascripts/d3.v2.min.js'></script>
+    <script src='http://localhost:8011/socket.io/socket.io.js'></script>
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <ul class="nav">
+                <li><a href="index.html"><i class="icon-home icon-white"></i> </a></li>
+                <li><a href="simple.html">Simple Receiver</a></li>
+                <li><a href="d3example.html">D3 Example</a></li>
+                <li><a href="bar.html">Bar Chart</a></li>
+                <li><a href="oplog.html">Oplog Watcher</a></li>                
+            </ul>
+        </div>
+    </div>
+    <div class="container">
+        <header>
+            <h1>Bar Chart</h1>
+        </header>
+        <p></p>
+        <div id="barchart" class="gallery"></div>
+    </div>
+    <script>
+        var chartData   = [];
+        var chartLabels = [];
+
+        if(typeof(io) === 'undefined')
+            d3.select("#barchart").html("No WS connection");
+        else
+        {
+            var socket = io.connect('ws://localhost:8011');
+
+            socket.on('stats-channel', function (data) {
+                var event = data.event;
+                var count = data.count;
+                console.log('Received new count of ' + count + ' for event ' + event);
+
+                if(chartLabels.indexOf(event) != -1)
+                    chartData[chartLabels.indexOf(event)] = chartData[chartLabels.indexOf(event)] + count;
+                else
+                {
+                    chartLabels.push(event);
+                    chartData[chartLabels.indexOf(event)] = count;
+                }
+
+                console.log('Updated count for ' + event + ' to ' + chartData[chartLabels.indexOf(event)]);
+                updateChart(chartData);
+            });                
+        }
+
+        // Initialise SVG
+
+        var width = 1000;
+        var barHeight = 50;
+
+        var chart = d3.select("#barchart").append("svg")
+            .attr("class", "chart")
+            .attr("width", width)
+            .attr("height", barHeight * chartData.length);
+
+        var x = d3.scale.linear()
+            .domain([0, d3.max(chartData)])
+            .range([0, width]);
+
+        function updateChart(data)
+        {
+            if(data.length === 0)
+                return;
+
+            // rescale the chart to cope with new values
+
+            x = d3.scale.linear()
+                .domain([0, d3.max(data)])
+                .range([0, width]);
+
+            // resize the SVG in case there are new bars
+
+            d3.select("svg")
+                .attr("height", barHeight * data.length);
+
+            // updating bars
+
+            chart.selectAll("rect")
+                .data(data)
+                    .style("fill", "steelblue")
+                    .attr("y", function(d, i) { return i * barHeight; })
+                    .attr("height", barHeight)
+                    .transition()
+                        .duration(300)
+                            .attr("width", x);
+
+            // updating labels
+
+            chart.selectAll("text")
+                .data(data)
+                    .text(function(d,i) { return chartLabels[i] + ' (' + d + ')' });
+
+            // entering bars
+
+            chart.selectAll("rect")
+                .data(data)
+                .enter()
+                .append("rect")
+                    .style("fill", "#FF0000")
+                    .attr("y", function(d, i) { return i * barHeight; })
+                    .attr("height", barHeight)
+                        .transition()
+                            .duration(300)
+                            .attr("width", x);
+
+
+            // entering labels
+
+            chart.selectAll("text")
+                .data(data)
+                .enter()
+                .append("text")
+                    .attr("x", 20)
+                    .attr("y", function(d, i) { return (i * barHeight) + (barHeight/2); })
+                    .attr("dx", -3)
+                    .attr("dy", ".4em")
+                    .attr("text-anchor", "start")
+                    .attr("font-size", (barHeight/2) +  "px")
+                    .text(function(d,i) { return chartLabels[i] + ' (' + d + ')' });
+        }
+    </script>
+</body>
+</html>
