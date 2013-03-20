@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3</title>
+        <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+        <link rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.css">
+        <link rel="stylesheet" href="/bootstrap/css/docs.css">
+        <link rel="stylesheet" href="/bootstrap/css/nvd3.css">
+        <link rel="stylesheet" href="/stylesheets/graph.css" />
+    <script type="text/javascript" src="/javascripts/d3.js"></script>
+    <script type="text/javascript" src="/javascripts/fisheye.js"></script>
+    <script type="text/javascript" src="/javascripts/nv.d3.js"></script>
+    <script type="text/javascript" src="/javascripts/Underscore.js"></script>
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+        <ul class="nav">
+            <li><a href="PieChart.html"><i class="icon-home icon-white"></i> </a></li>
+            <li><a href="PieChart.html">Pie chart</a></li>
+            <li><a href="nvd3Bar.html">Bar</a></li>
+            <li><a href="multibar.html">Multi Bar Chart</a></li>
+            <li><a href="BubbleChart.html">Bubble</a></li>
+        </ul>
+    </div>
+</div>
+<div class="container">
+    <header>
+        <h1>Pie Chart</h1>
+    </header>
+</div>
+
+<style>
+
+    #chart svg {
+        height: 400px;
+    }
+
+</style>
+
+
+<div id="chart">
+    <svg></svg>
+</div>
+
+<script type="text/javascript">
+    d3.json("PM.json", function(data) {
+        var registrationStatusCodes = [];
+
+        Date.prototype.yyyymmdd = function() {
+            var yyyy = this.getFullYear().toString();
+            var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
+            var dd  = this.getDate().toString();
+            return yyyy + (mm[1]?mm:"0"+mm[0]) + (dd[1]?dd:"0"+dd[0]); // padding
+        }
+
+        var registration_status_code = function(num){ registrationStatusCodes.push({
+            "symbol" : _.pick(num, 'data').data.registration_status_code,
+            "date" : new Date(_.pick(num, 'metaData').metaData.originatorEventTime)
+        })};
+        _.each(data, registration_status_code);
+
+        symbols = d3.nest()
+                .key(function(d) { return d.symbol; })
+                .entries(registrationStatusCodes);
+
+//        alert(JSON.stringify(symbols));
+
+
+        nv.addGraph(function() {
+            var chart = nv.models.pieChart()
+                    .x(function(d) { return d.label })
+                    .y(function(d) { return d.value })
+                    .showLabels(true);
+
+            d3.select("#chart svg")
+                    .datum([
+                        {
+                            key: "Registration status chart",
+                            values: [
+                                {
+                                    "label": symbols[0].key,
+                                    "value" : symbols[0].values.length
+                                } ,
+                                {
+                                    "label": symbols[1].key,
+                                    "value" : symbols[1].values.length
+                                }
+                            ]
+                        }
+                    ]
+                    )
+                    .transition().duration(1200)
+                    .call(chart);
+
+
+            return chart;
+        });
+    });
+
+</script>
+</body>
+</html>
